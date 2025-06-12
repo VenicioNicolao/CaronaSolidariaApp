@@ -24,7 +24,8 @@ O objetivo principal é ajudar quem precisa se deslocar de forma econômica e se
 
 ---
 
-## Autor
+## Autores
 
-Venicio Nicolao  
-Contato: venicionicolao@irani.com.br
+- Venicio Nicolao  
+  Contato: venicionicolao@irani.com.br
+- Paulo Cesar Padilha de Oliveira
