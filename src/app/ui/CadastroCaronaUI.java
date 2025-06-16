@@ -1,23 +1,24 @@
 package app.ui;
 
+import app.database.DatabaseInitializer;
+
 import javax.swing.*;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 public class CadastroCaronaUI extends JFrame {
 
-    private JTextField motoristaField;
-    private JTextField origemField;
-    private JTextField destinoField;
-    private JTextField horarioField;
+    private JTextField motoristaField, origemField, destinoField, horarioField, vagasField;
 
     public CadastroCaronaUI() {
-        setTitle("Cadastro de Carona");
-        setSize(400, 300);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setTitle("Cadastrar Carona");
+        setSize(350, 300);
         setLocationRelativeTo(null);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(6, 2, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         panel.add(new JLabel("Motorista:"));
         motoristaField = new JTextField();
@@ -35,52 +36,57 @@ public class CadastroCaronaUI extends JFrame {
         horarioField = new JTextField();
         panel.add(horarioField);
 
-        JButton salvarButton = new JButton("Salvar");
-        JButton voltarButton = new JButton("Voltar");
+        panel.add(new JLabel("Vagas:"));
+        vagasField = new JTextField();
+        panel.add(vagasField);
 
-        panel.add(salvarButton);
-        panel.add(voltarButton);
+        JButton salvarBtn = new JButton("Salvar");
+        salvarBtn.addActionListener(e -> salvarCarona());
+        panel.add(new JLabel());
+        panel.add(salvarBtn);
 
         add(panel);
-
-        salvarButton.addActionListener(e -> salvarCarona());
-
-        voltarButton.addActionListener(e -> {
-            dispose();
-            new TelaPrincipal().setVisible(true);
-        });
     }
 
     private void salvarCarona() {
-        String motorista = motoristaField.getText();
-        String origem = origemField.getText();
-        String destino = destinoField.getText();
-        String horario = horarioField.getText();
+        String motorista = motoristaField.getText().trim();
+        String origem = origemField.getText().trim();
+        String destino = destinoField.getText().trim();
+        String horario = horarioField.getText().trim();
+        String vagasText = vagasField.getText().trim();
 
-        if (motorista.isEmpty() || origem.isEmpty() || destino.isEmpty() || horario.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor, preencha todos os campos.", "Erro", JOptionPane.ERROR_MESSAGE);
+        if (motorista.isEmpty() || origem.isEmpty() || destino.isEmpty() || horario.isEmpty() || vagasText.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Preencha todos os campos.");
             return;
         }
 
-        String sql = "INSERT INTO carona(motorista, origem, destino, horario) VALUES (?, ?, ?, ?)";
+        int vagas;
+        try {
+            vagas = Integer.parseInt(vagasText);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Vagas deve ser um número inteiro.");
+            return;
+        }
 
-        try (var conn = app.database.DatabaseInitializer.connect()) {
-            try (var pstmt = conn.prepareStatement(sql)) {
-                pstmt.setString(1, motorista);
-                pstmt.setString(2, origem);
-                pstmt.setString(3, destino);
-                pstmt.setString(4, horario);
-                pstmt.executeUpdate();
+        try (Connection conn = DatabaseInitializer.connect()) {
+            String sql = "INSERT INTO carona (motorista, origem, destino, horario, vagas) VALUES (?, ?, ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, motorista);
+            stmt.setString(2, origem);
+            stmt.setString(3, destino);
+            stmt.setString(4, horario);
+            stmt.setInt(5, vagas);
 
-                JOptionPane.showMessageDialog(this, "Carona cadastrada com sucesso!");
+            stmt.executeUpdate();
 
-                motoristaField.setText("");
-                origemField.setText("");
-                destinoField.setText("");
-                horarioField.setText("");
-            }
+            JOptionPane.showMessageDialog(this, "Carona cadastrada com sucesso.");
+            dispose();  // fecha esta janela
+
+            // abre a tela principal novamente
+            SwingUtilities.invokeLater(() -> new TelaPrincipal().setVisible(true));
+
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Erro ao salvar carona: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Erro ao cadastrar carona: " + ex.getMessage());
         }
     }
 }

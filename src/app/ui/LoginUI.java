@@ -15,28 +15,43 @@ public class LoginUI extends JFrame {
 
     public LoginUI() {
         setTitle("Login");
-        setSize(300, 200);
+        setSize(320, 200);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JPanel mainPanel = new JPanel();
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-        panel.add(new JLabel("Login:"));
+        JPanel fieldsPanel = new JPanel();
+        fieldsPanel.setLayout(new GridLayout(2, 2, 10, 10));
+
+        fieldsPanel.add(new JLabel("Login:"));
         loginField = new JTextField();
-        panel.add(loginField);
+        fieldsPanel.add(loginField);
 
-        panel.add(new JLabel("Senha:"));
+        fieldsPanel.add(new JLabel("Senha:"));
         senhaField = new JPasswordField();
-        panel.add(senhaField);
+        fieldsPanel.add(senhaField);
+
+        mainPanel.add(fieldsPanel);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
 
         JButton entrarBtn = new JButton("Entrar");
+        entrarBtn.setPreferredSize(new Dimension(100, 30));
         entrarBtn.addActionListener(e -> autenticar());
+        buttonsPanel.add(entrarBtn);
 
-        panel.add(new JLabel()); // espaço vazio
-        panel.add(entrarBtn);
+        JButton criarContaBtn = new JButton("Criar conta");
+        criarContaBtn.setPreferredSize(new Dimension(100, 30));
+        criarContaBtn.addActionListener(e -> new CadastroUsuarioUI().setVisible(true));
+        buttonsPanel.add(criarContaBtn);
 
-        add(panel);
+        mainPanel.add(buttonsPanel);
+
+        add(mainPanel);
     }
 
     private void autenticar() {

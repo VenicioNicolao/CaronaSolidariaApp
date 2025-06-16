@@ -2,43 +2,28 @@ package app.database;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 public class UsuarioDAO {
 
-    public static boolean validarLogin(String login, String senha) {
-        String sql = "SELECT * FROM usuario WHERE login = ? AND senha = ?";
+    public static void cadastrarUsuario(String nome, String login, String senha) {
+        String sql = "INSERT INTO usuario(nome, login, senha) VALUES (?, ?, ?)";
+
         try (Connection conn = DatabaseInitializer.connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, login);
-            pstmt.setString(2, senha);
+            stmt.setString(1, nome);
+            stmt.setString(2, login);
+            stmt.setString(3, senha);
 
-            ResultSet rs = pstmt.executeQuery();
-            return rs.next();
-
-        } catch (SQLException e) {
-            System.err.println("Erro ao validar login: " + e.getMessage());
-            return false;
+            stmt.executeUpdate();
+            System.out.println("Usuário cadastrado com sucesso.");
+        } catch (Exception e) {
+            System.err.println("Erro ao cadastrar usuário: " + e.getMessage());
         }
     }
 
-    public static boolean cadastrarUsuario(String nome, String login, String senha) {
-        String sql = "INSERT INTO usuario (nome, login, senha) VALUES (?, ?, ?)";
-        try (Connection conn = DatabaseInitializer.connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, nome);
-            pstmt.setString(2, login);
-            pstmt.setString(3, senha);
-
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
-
-        } catch (SQLException e) {
-            System.err.println("Erro ao cadastrar usuário: " + e.getMessage());
-            return false;
-        }
+    public static void main(String[] args) {
+        // Aqui você define os dados do usuário que será cadastrado
+        cadastrarUsuario("João Pedro", "joaopedro", "1234");
     }
 }
