@@ -26,15 +26,22 @@ public class DatabaseInitializer {
         String sqlPassageiro = "CREATE TABLE IF NOT EXISTS passageiro ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + "nome TEXT NOT NULL,"
-                + "telefone TEXT NOT NULL,"
-                + "carona_id INTEGER,"
-                + "FOREIGN KEY(carona_id) REFERENCES carona(id)"
+                + "telefone TEXT,"
+                + "email TEXT"
+                + ");";
+
+        String sqlUsuario = "CREATE TABLE IF NOT EXISTS usuario ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "nome TEXT NOT NULL,"
+                + "login TEXT NOT NULL UNIQUE,"
+                + "senha TEXT NOT NULL"
                 + ");";
 
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
             stmt.execute(sqlCarona);
             stmt.execute(sqlPassageiro);
-            System.out.println("Tabelas criadas com sucesso.");
+            stmt.execute(sqlUsuario);
+            System.out.println("Tabelas criadas/verificadas com sucesso.");
         } catch (SQLException e) {
             System.err.println("Erro ao criar tabelas: " + e.getMessage());
         }
@@ -57,6 +64,6 @@ public class DatabaseInitializer {
 
     public static void main(String[] args) {
         criarTabelas();
-        adicionarColunaVagas(); // execute uma vez se for banco antigo
+        adicionarColunaVagas();
     }
 }

@@ -7,17 +7,18 @@ public class TelaPrincipal extends JFrame {
 
     public TelaPrincipal() {
         setTitle("Carona Solidária");
-        setSize(300, 200);
+        setSize(350, 250);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        JPanel panel = new JPanel(new GridLayout(3, 1, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(4, 1, 10, 10));
 
-        JButton cadastrarBtn = new JButton("Cadastrar Carona");
+        JButton cadastrarCaronaBtn = new JButton("Cadastrar Carona");
         JButton listarBtn = new JButton("Listar Caronas");
+        JButton cadastrarUsuarioBtn = new JButton("Cadastrar Usuário");
         JButton sairBtn = new JButton("Sair");
 
-        cadastrarBtn.addActionListener(e -> {
+        cadastrarCaronaBtn.addActionListener(e -> {
             dispose();
             new CadastroCaronaUI().setVisible(true);
         });
@@ -27,11 +28,17 @@ public class TelaPrincipal extends JFrame {
             new ListarCaronasUI().setVisible(true);
         });
 
+        cadastrarUsuarioBtn.addActionListener(e -> {
+            dispose();
+            new CadastroUsuarioUI().setVisible(true);
+        });
+
         sairBtn.addActionListener(e -> System.exit(0));
 
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.add(cadastrarBtn);
+        panel.add(cadastrarCaronaBtn);
         panel.add(listarBtn);
+        panel.add(cadastrarUsuarioBtn);
         panel.add(sairBtn);
 
         add(panel);
