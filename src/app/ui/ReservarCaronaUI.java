@@ -50,7 +50,6 @@ public class ReservarCaronaUI extends JFrame {
 
     private void carregarCaronasDisponiveis() {
         modeloTabela.setRowCount(0);
-
         String sql = "SELECT * FROM carona WHERE vagas > 0";
 
         try (Connection conn = DatabaseInitializer.connect();
@@ -83,11 +82,17 @@ public class ReservarCaronaUI extends JFrame {
 
         int idCarona = (int) modeloTabela.getValueAt(linhaSelecionada, 0);
 
-        boolean sucesso = DatabaseInitializer.reservarCarona(idCarona);
+        int novasVagas = DatabaseInitializer.reservarCarona(idCarona);
 
-        if (sucesso) {
+        if (novasVagas >= 0) {
             JOptionPane.showMessageDialog(this, "Reserva realizada com sucesso!");
-            carregarCaronasDisponiveis();
+
+            if (novasVagas == 0) {
+                modeloTabela.removeRow(linhaSelecionada); // remove da tabela
+            } else {
+                modeloTabela.setValueAt(novasVagas, linhaSelecionada, 5); // atualiza coluna "Vagas"
+            }
+
         } else {
             JOptionPane.showMessageDialog(this, "Não foi possível reservar a carona. Verifique as vagas e tente novamente.");
         }

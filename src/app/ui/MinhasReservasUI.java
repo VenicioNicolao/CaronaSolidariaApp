@@ -13,12 +13,14 @@ public class MinhasReservasUI extends JFrame {
 
     private JTable tabelaReservas;
     private DefaultTableModel modelo;
+    private static MinhasReservasUI instancia;
 
     public MinhasReservasUI() {
         setTitle("Minhas Reservas");
         setSize(900, 400);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        instancia = this;
 
         String[] colunas = {"ID", "Origem", "Destino", "Motorista", "Horário", "Número de Vagas"};
         modelo = new DefaultTableModel(colunas, 0) {
@@ -33,6 +35,7 @@ public class MinhasReservasUI extends JFrame {
 
         JButton btnVoltar = new JButton("Voltar");
         btnVoltar.addActionListener(e -> {
+            instancia = null;
             dispose();
             new TelaPrincipal().setVisible(true);
         });
@@ -60,6 +63,17 @@ public class MinhasReservasUI extends JFrame {
                     reserva.get("vagas")
             };
             modelo.addRow(linha);
+        }
+    }
+
+    public static void atualizarVagasCarona(int idCarona, int novasVagas) {
+        if (instancia == null) return;
+        for (int i = 0; i < instancia.modelo.getRowCount(); i++) {
+            Object idObj = instancia.modelo.getValueAt(i, 0);
+            if (idObj != null && Integer.parseInt(idObj.toString()) == idCarona) {
+                instancia.modelo.setValueAt(novasVagas, i, 5);
+                return;
+            }
         }
     }
 

@@ -13,7 +13,6 @@ public class DatabaseInitializer {
         return DriverManager.getConnection(URL);
     }
 
-    // Método para criar todas as tabelas necessárias
     public static void criarTabelas() {
         String sqlCarona = "CREATE TABLE IF NOT EXISTS carona ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -46,7 +45,6 @@ public class DatabaseInitializer {
         }
     }
 
-    // (Opcional) método para ajustar tabela reserva em caso de migração futura
     public static void ajustarTabelaReserva() {
         String sqlCreate = "CREATE TABLE IF NOT EXISTS reserva_nova ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -58,20 +56,18 @@ public class DatabaseInitializer {
                 + "SELECT id, carona_id FROM reserva;";
 
         String sqlDrop = "DROP TABLE reserva;";
-
         String sqlRename = "ALTER TABLE reserva_nova RENAME TO reserva;";
 
         try (Connection conn = connect();
              Statement stmt = conn.createStatement()) {
 
             conn.setAutoCommit(false);
-
             stmt.execute(sqlCreate);
             stmt.execute(sqlCopy);
             stmt.execute(sqlDrop);
             stmt.execute(sqlRename);
-
             conn.commit();
+
             System.out.println("Tabela 'reserva' ajustada com sucesso!");
 
         } catch (SQLException e) {
@@ -80,10 +76,10 @@ public class DatabaseInitializer {
         }
     }
 
-    // Método simples para reservar uma carona: diminui vagas e insere reserva
-    public static boolean reservarCarona(int caronaId) {
+    public static int reservarCarona(int caronaId) {
         String sqlUpdate = "UPDATE carona SET vagas = vagas - 1 WHERE id = ? AND vagas > 0";
         String sqlInsert = "INSERT INTO reserva (carona_id) VALUES (?)";
+        String sqlSelect = "SELECT vagas FROM carona WHERE id = ?";
 
         try (Connection conn = connect()) {
             conn.setAutoCommit(false);
@@ -93,7 +89,7 @@ public class DatabaseInitializer {
                 int linhasAfetadas = psUpdate.executeUpdate();
                 if (linhasAfetadas == 0) {
                     conn.rollback();
-                    return false;
+                    return -1;
                 }
             }
 
@@ -103,18 +99,27 @@ public class DatabaseInitializer {
             }
 
             conn.commit();
-            return true;
+
+            try (PreparedStatement psSelect = conn.prepareStatement(sqlSelect)) {
+                psSelect.setInt(1, caronaId);
+                try (ResultSet rs = psSelect.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("vagas");
+                    }
+                }
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
         }
+
+        return -1;
     }
 
     public static List<HashMap<String, String>> listarReservas(String loginUsuario) {
         List<HashMap<String, String>> reservas = new ArrayList<>();
 
-        String sql = "SELECT r.id, c.origem, c.destino, c.horario, c.motorista "
+        String sql = "SELECT r.id, c.origem, c.destino, c.horario, c.motorista, c.vagas "
                 + "FROM reserva r "
                 + "JOIN carona c ON r.carona_id = c.id "
                 + "ORDER BY r.id DESC";
@@ -130,6 +135,7 @@ public class DatabaseInitializer {
                 linha.put("destino", rs.getString("destino"));
                 linha.put("horario", rs.getString("horario"));
                 linha.put("motorista", rs.getString("motorista"));
+                linha.put("vagas", rs.getString("vagas"));
                 reservas.add(linha);
             }
 
