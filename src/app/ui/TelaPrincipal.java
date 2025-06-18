@@ -7,15 +7,16 @@ public class TelaPrincipal extends JFrame {
 
     public TelaPrincipal() {
         setTitle("Carona Solidária");
-        setSize(350, 250);
+        setSize(350, 330);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        JPanel panel = new JPanel(new GridLayout(4, 1, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(5, 1, 10, 10));
 
         JButton cadastrarCaronaBtn = new JButton("Cadastrar Carona");
         JButton listarBtn = new JButton("Listar Caronas");
-        JButton cadastrarUsuarioBtn = new JButton("Cadastrar Usuário");
+        JButton reservarCaronaBtn = new JButton("Reservar Carona");
+        JButton minhasReservasBtn = new JButton("Minhas Reservas");
         JButton sairBtn = new JButton("Sair");
 
         cadastrarCaronaBtn.addActionListener(e -> {
@@ -28,9 +29,14 @@ public class TelaPrincipal extends JFrame {
             new ListarCaronasUI().setVisible(true);
         });
 
-        cadastrarUsuarioBtn.addActionListener(e -> {
+        reservarCaronaBtn.addActionListener(e -> {
             dispose();
-            new CadastroUsuarioUI().setVisible(true);
+            new ReservarCaronaUI().setVisible(true);
+        });
+
+        minhasReservasBtn.addActionListener(e -> {
+            dispose();
+            new MinhasReservasUI().setVisible(true);
         });
 
         sairBtn.addActionListener(e -> System.exit(0));
@@ -38,7 +44,8 @@ public class TelaPrincipal extends JFrame {
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         panel.add(cadastrarCaronaBtn);
         panel.add(listarBtn);
-        panel.add(cadastrarUsuarioBtn);
+        panel.add(reservarCaronaBtn);
+        panel.add(minhasReservasBtn);
         panel.add(sairBtn);
 
         add(panel);

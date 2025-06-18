@@ -1,9 +1,9 @@
 package app.database;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class DatabaseInitializer {
 
@@ -13,6 +13,7 @@ public class DatabaseInitializer {
         return DriverManager.getConnection(URL);
     }
 
+    // Método para criar todas as tabelas necessárias
     public static void criarTabelas() {
         String sqlCarona = "CREATE TABLE IF NOT EXISTS carona ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -23,13 +24,6 @@ public class DatabaseInitializer {
                 + "vagas INTEGER NOT NULL"
                 + ");";
 
-        String sqlPassageiro = "CREATE TABLE IF NOT EXISTS passageiro ("
-                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + "nome TEXT NOT NULL,"
-                + "telefone TEXT,"
-                + "email TEXT"
-                + ");";
-
         String sqlUsuario = "CREATE TABLE IF NOT EXISTS usuario ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + "nome TEXT NOT NULL,"
@@ -37,33 +31,112 @@ public class DatabaseInitializer {
                 + "senha TEXT NOT NULL"
                 + ");";
 
+        String sqlReserva = "CREATE TABLE IF NOT EXISTS reserva ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "carona_id INTEGER NOT NULL,"
+                + "FOREIGN KEY(carona_id) REFERENCES carona(id)"
+                + ");";
+
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
             stmt.execute(sqlCarona);
-            stmt.execute(sqlPassageiro);
             stmt.execute(sqlUsuario);
-            System.out.println("Tabelas criadas/verificadas com sucesso.");
+            stmt.execute(sqlReserva);
         } catch (SQLException e) {
             System.err.println("Erro ao criar tabelas: " + e.getMessage());
         }
     }
 
-    public static void adicionarColunaVagas() {
-        String sql = "ALTER TABLE carona ADD COLUMN vagas INTEGER DEFAULT 1";
+    // (Opcional) método para ajustar tabela reserva em caso de migração futura
+    public static void ajustarTabelaReserva() {
+        String sqlCreate = "CREATE TABLE IF NOT EXISTS reserva_nova ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "carona_id INTEGER NOT NULL,"
+                + "FOREIGN KEY(carona_id) REFERENCES carona(id)"
+                + ");";
 
-        try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate(sql);
-            System.out.println("Coluna 'vagas' adicionada com sucesso.");
+        String sqlCopy = "INSERT INTO reserva_nova (id, carona_id) "
+                + "SELECT id, carona_id FROM reserva;";
+
+        String sqlDrop = "DROP TABLE reserva;";
+
+        String sqlRename = "ALTER TABLE reserva_nova RENAME TO reserva;";
+
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement()) {
+
+            conn.setAutoCommit(false);
+
+            stmt.execute(sqlCreate);
+            stmt.execute(sqlCopy);
+            stmt.execute(sqlDrop);
+            stmt.execute(sqlRename);
+
+            conn.commit();
+            System.out.println("Tabela 'reserva' ajustada com sucesso!");
+
         } catch (SQLException e) {
-            if (e.getMessage().contains("duplicate column name") || e.getMessage().contains("already exists")) {
-                System.out.println("A coluna 'vagas' já existe.");
-            } else {
-                System.out.println("Erro ao adicionar coluna: " + e.getMessage());
-            }
+            e.printStackTrace();
+            System.err.println("Erro ao ajustar tabela 'reserva'.");
         }
     }
 
-    public static void main(String[] args) {
-        criarTabelas();
-        adicionarColunaVagas();
+    // Método simples para reservar uma carona: diminui vagas e insere reserva
+    public static boolean reservarCarona(int caronaId) {
+        String sqlUpdate = "UPDATE carona SET vagas = vagas - 1 WHERE id = ? AND vagas > 0";
+        String sqlInsert = "INSERT INTO reserva (carona_id) VALUES (?)";
+
+        try (Connection conn = connect()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate)) {
+                psUpdate.setInt(1, caronaId);
+                int linhasAfetadas = psUpdate.executeUpdate();
+                if (linhasAfetadas == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            try (PreparedStatement psInsert = conn.prepareStatement(sqlInsert)) {
+                psInsert.setInt(1, caronaId);
+                psInsert.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static List<HashMap<String, String>> listarReservas(String loginUsuario) {
+        List<HashMap<String, String>> reservas = new ArrayList<>();
+
+        String sql = "SELECT r.id, c.origem, c.destino, c.horario, c.motorista "
+                + "FROM reserva r "
+                + "JOIN carona c ON r.carona_id = c.id "
+                + "ORDER BY r.id DESC";
+
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                HashMap<String, String> linha = new HashMap<>();
+                linha.put("id", rs.getString("id"));
+                linha.put("origem", rs.getString("origem"));
+                linha.put("destino", rs.getString("destino"));
+                linha.put("horario", rs.getString("horario"));
+                linha.put("motorista", rs.getString("motorista"));
+                reservas.add(linha);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return reservas;
     }
 }

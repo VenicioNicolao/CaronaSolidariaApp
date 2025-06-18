@@ -1,24 +1,18 @@
 package app;
 
-import app.dao.CadastroDeCaronas;
-import app.model.Carona;
-import app.model.Usuario;
+import app.database.DatabaseInitializer;
+import app.ui.ReservarCaronaUI;
 
-import java.util.List;
+import javax.swing.SwingUtilities;
 
 public class Main {
     public static void main(String[] args) {
-        CadastroDeCaronas cadastro = new CadastroDeCaronas();
+        // Cria as tabelas no banco, se não existirem
+        DatabaseInitializer.criarTabelas();
 
-        Usuario motorista = new Usuario("João Silva", "11999999999");
-        Carona carona = new Carona(motorista, "Centro", "Universidade", "18:00");
-
-        cadastro.salvar(carona);
-
-        List<Carona> caronas = cadastro.listarCaronas();
-        System.out.println("Todas as caronas:");
-        for (Carona c : caronas) {
-            System.out.println(c);
-        }
+        // Abre a interface gráfica na thread do Swing
+        SwingUtilities.invokeLater(() -> {
+            new ReservarCaronaUI().setVisible(true);
+        });
     }
 }
