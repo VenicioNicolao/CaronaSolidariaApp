@@ -1,82 +1,103 @@
 package app.ui;
 
 import app.database.DatabaseInitializer;
-
 import javax.swing.*;
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 
 public class LoginUI extends JFrame {
-
-    private JTextField loginField;
-    private JPasswordField senhaField;
+    private JTextField loginField = new JTextField();
+    private JPasswordField senhaField = new JPasswordField();
 
     public LoginUI() {
         setTitle("Login");
-        setSize(320, 200);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setSize(300, 250);
         setLocationRelativeTo(null);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        JPanel mainPanel = new JPanel();
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        JPanel painel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JPanel fieldsPanel = new JPanel();
-        fieldsPanel.setLayout(new GridLayout(2, 2, 10, 10));
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.EAST;
+        painel.add(new JLabel("Login:"), gbc);
 
-        fieldsPanel.add(new JLabel("Login:"));
-        loginField = new JTextField();
-        fieldsPanel.add(loginField);
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        loginField.setPreferredSize(new Dimension(150, 25));
+        painel.add(loginField, gbc);
 
-        fieldsPanel.add(new JLabel("Senha:"));
-        senhaField = new JPasswordField();
-        fieldsPanel.add(senhaField);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.EAST;
+        painel.add(new JLabel("Senha:"), gbc);
 
-        mainPanel.add(fieldsPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        senhaField.setPreferredSize(new Dimension(150, 25));
+        painel.add(senhaField, gbc);
 
-        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
 
-        JButton entrarBtn = new JButton("Entrar");
-        entrarBtn.setPreferredSize(new Dimension(100, 30));
-        entrarBtn.addActionListener(e -> autenticar());
-        buttonsPanel.add(entrarBtn);
+        JButton btnEntrar = new JButton("Entrar");
+        btnEntrar.setPreferredSize(new Dimension(120, 30));
+        painel.add(btnEntrar, gbc);
 
-        JButton criarContaBtn = new JButton("Criar conta");
-        criarContaBtn.setPreferredSize(new Dimension(100, 30));
-        criarContaBtn.addActionListener(e -> new CadastroUsuarioUI().setVisible(true));
-        buttonsPanel.add(criarContaBtn);
+        gbc.gridy = 3;
+        JButton btnCriar = new JButton("Criar Usuário");
+        btnCriar.setPreferredSize(new Dimension(120, 30));
+        painel.add(btnCriar, gbc);
 
-        mainPanel.add(buttonsPanel);
+        btnEntrar.addActionListener(e -> autenticar());
 
-        add(mainPanel);
+        btnCriar.addActionListener(e -> {
+            dispose();
+            new CadastroUsuarioUI().setVisible(true);
+        });
+
+        add(painel);
+        setVisible(true);
     }
 
     private void autenticar() {
         String login = loginField.getText().trim();
-        String senha = new String(senhaField.getPassword()).trim();
+        String senha = new String(senhaField.getPassword());
 
-        try (Connection conn = DatabaseInitializer.connect()) {
-            String sql = "SELECT * FROM usuario WHERE login = ? AND senha = ?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, login);
-            stmt.setString(2, senha);
-            ResultSet rs = stmt.executeQuery();
+        if (login.isEmpty() || senha.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Preencha login e senha.");
+            return;
+        }
 
-            if (rs.next()) {
-                dispose();
-                new TelaPrincipal().setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, "Login ou senha inválidos.");
+        String sql = "SELECT * FROM usuario WHERE login=? AND senha=?";
+
+        try (Connection conn = DatabaseInitializer.connect();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, login);
+            ps.setString(2, senha);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    JOptionPane.showMessageDialog(this, "Login efetuado com sucesso!");
+                    dispose();
+                    new TelaPrincipal().setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Login ou senha inválidos.");
+                }
             }
+
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Erro ao conectar: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro: " + ex.getMessage());
         }
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new LoginUI().setVisible(true));
+        SwingUtilities.invokeLater(LoginUI::new);
     }
 }
