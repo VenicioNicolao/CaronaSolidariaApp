@@ -145,4 +145,48 @@ public class DatabaseInitializer {
 
         return reservas;
     }
+
+    // MÉTODO NOVO PARA CANCELAR RESERVA
+    public static boolean cancelarReserva(int idReserva) {
+        String sqlCaronaId = "SELECT carona_id FROM reserva WHERE id = ?";
+        String sqlDeleteReserva = "DELETE FROM reserva WHERE id = ?";
+        String sqlUpdateVagas = "UPDATE carona SET vagas = vagas + 1 WHERE id = ?";
+
+        try (Connection conn = connect()) {
+            conn.setAutoCommit(false);
+
+            int caronaId;
+
+            // Buscar o carona_id da reserva
+            try (PreparedStatement psCarona = conn.prepareStatement(sqlCaronaId)) {
+                psCarona.setInt(1, idReserva);
+                try (ResultSet rs = psCarona.executeQuery()) {
+                    if (!rs.next()) {
+                        conn.rollback();
+                        return false; // reserva não existe
+                    }
+                    caronaId = rs.getInt("carona_id");
+                }
+            }
+
+            // Deletar reserva
+            try (PreparedStatement psDelete = conn.prepareStatement(sqlDeleteReserva)) {
+                psDelete.setInt(1, idReserva);
+                psDelete.executeUpdate();
+            }
+
+            // Atualizar vagas da carona
+            try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdateVagas)) {
+                psUpdate.setInt(1, caronaId);
+                psUpdate.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
