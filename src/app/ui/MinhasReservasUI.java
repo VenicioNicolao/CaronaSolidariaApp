@@ -22,7 +22,8 @@ public class MinhasReservasUI extends JFrame {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         instancia = this;
 
-        String[] colunas = {"ID", "Origem", "Destino", "Motorista", "Horário", "Número de Vagas"};
+        // REMOVIDA a coluna "Número de Vagas"
+        String[] colunas = {"ID", "Origem", "Destino", "Motorista", "Horário"};
         modelo = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -40,7 +41,11 @@ public class MinhasReservasUI extends JFrame {
             new TelaPrincipal().setVisible(true);
         });
 
+        JButton btnCancelar = new JButton("Cancelar Reserva");
+        btnCancelar.addActionListener(e -> cancelarReserva());
+
         JPanel painelInferior = new JPanel();
+        painelInferior.add(btnCancelar);
         painelInferior.add(btnVoltar);
 
         add(scrollPane, BorderLayout.CENTER);
@@ -59,22 +64,44 @@ public class MinhasReservasUI extends JFrame {
                     reserva.get("origem"),
                     reserva.get("destino"),
                     reserva.get("motorista"),
-                    reserva.get("horario"),
-                    reserva.get("vagas")
+                    reserva.get("horario")
+                    // NÃO adicionamos mais vaga aqui
             };
             modelo.addRow(linha);
         }
     }
 
+    private void cancelarReserva() {
+        int linhaSelecionada = tabelaReservas.getSelectedRow();
+        if (linhaSelecionada == -1) {
+            JOptionPane.showMessageDialog(this, "Selecione uma reserva para cancelar.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirmar = JOptionPane.showConfirmDialog(this,
+                "Tem certeza que deseja cancelar esta reserva?",
+                "Confirmar Cancelamento",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirmar != JOptionPane.YES_OPTION) return;
+
+        int idReserva = Integer.parseInt(modelo.getValueAt(linhaSelecionada, 0).toString());
+
+        boolean sucesso = DatabaseInitializer.cancelarReserva(idReserva);
+
+        if (sucesso) {
+            // Apenas recarrega a tabela para evitar inconsistências
+            JOptionPane.showMessageDialog(this, "Reserva cancelada com sucesso.");
+            carregarReservas();
+        } else {
+            JOptionPane.showMessageDialog(this, "Erro ao cancelar reserva.", "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Método para atualizar vagas pode ser removido ou mantido, pois não mostra vagas na tabela
     public static void atualizarVagasCarona(int idCarona, int novasVagas) {
         if (instancia == null) return;
-        for (int i = 0; i < instancia.modelo.getRowCount(); i++) {
-            Object idObj = instancia.modelo.getValueAt(i, 0);
-            if (idObj != null && Integer.parseInt(idObj.toString()) == idCarona) {
-                instancia.modelo.setValueAt(novasVagas, i, 5);
-                return;
-            }
-        }
+        // Sem uso neste cenário, mas pode manter se desejar
     }
 
     public static void main(String[] args) {
