@@ -80,9 +80,8 @@ public class CadastroCaronaUI extends JFrame {
             stmt.executeUpdate();
 
             JOptionPane.showMessageDialog(this, "Carona cadastrada com sucesso.");
-            dispose();  // fecha esta janela
+            dispose();
 
-            // abre a tela principal novamente
             SwingUtilities.invokeLater(() -> new TelaPrincipal().setVisible(true));
 
         } catch (Exception ex) {

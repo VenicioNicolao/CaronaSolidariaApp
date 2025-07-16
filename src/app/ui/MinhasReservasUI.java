@@ -90,7 +90,6 @@ public class MinhasReservasUI extends JFrame {
         boolean sucesso = DatabaseInitializer.cancelarReserva(idReserva);
 
         if (sucesso) {
-            // Apenas recarrega a tabela para evitar inconsistências
             JOptionPane.showMessageDialog(this, "Reserva cancelada com sucesso.");
             carregarReservas();
         } else {
@@ -101,7 +100,6 @@ public class MinhasReservasUI extends JFrame {
     // Método para atualizar vagas pode ser removido ou mantido, pois não mostra vagas na tabela
     public static void atualizarVagasCarona(int idCarona, int novasVagas) {
         if (instancia == null) return;
-        // Sem uso neste cenário, mas pode manter se desejar
     }
 
     public static void main(String[] args) {
